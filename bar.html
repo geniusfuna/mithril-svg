@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My first mithril test</title>
+  <meta charset="UTF-8">
+<style type="text/css">
+svg{background-color:#eee;padding:5px;}
+line{stroke:#fff;stroke-width:1;fill:none;}
+text{font-family:Verdana;font-size:10px;fill:green;text-anchor:end;}
+text.start{text-anchor:start;}
+rect,path{fill:green;border-top-right-radius:4px;}
+rect:hover{fill:lightgreen;}
+.primary{fill:#337ab7;}
+.primary:hover{fill:#286090;}
+.success{fill:#5cb85c;}
+.success:hover{fill:#449d44;}
+.info{fill:#5bc0de;}
+.info:hover{fill:#31b0d5;}
+.warning{fill:#f0ad4e;}
+.warning:hover{fill:#ec971f;}
+.danger{fill:#d9534f;}
+.danger:hover{fill:#c9302c;}
+</style>
+</head>
+<body>
+<script src="js/mithril.min.js"></script>
+<script>
+var colors = ["primary","success","info","warning","danger"];
+function roundedRect(x, y, w, h, r, tl, tr, bl, br) {
+  var retval;
+  retval  = "M" + (x + r) + "," + y;
+  retval += "h" + (w - 2*r);
+  if (tr) {
+  	retval += "a" + r + "," + r + " 0 0 1 " + r + "," + r;
+	}else {
+		retval += "h" + r;
+		retval += "v" + r;
+	}
+  retval += "v" + (h - 2*r);
+  if (br) {
+  	retval += "a" + r + "," + r + " 0 0 1 " + -r + "," + r;
+  }else {
+  	retval += "v" + r;
+  	retval += "h" + -r;
+  }
+  retval += "h" + (2*r - w);
+  if (bl) {
+    retval += "a" + r + "," + r + " 0 0 1 " + -r + "," + -r;
+	}else {
+		retval += "h" + -r;
+		retval += "v" + -r;
+	}
+  retval += "v" + (2*r - h);
+  if (tl) {
+    retval += "a" + r + "," + r + " 0 0 1 " + r + "," + -r;
+  }else {
+  	retval += "v" + -r;
+  	retval += "h" + r;
+  }
+  retval += "z";
+  return retval;
+}
+
+function color(i){
+	l = colors.length;
+	if(i < l){
+		return colors[i];
+	}else{
+		a = i%l;
+		console.log(a);
+		return colors[a];
+	}
+}
+
+var Graph = function() {
+	var model = {};
+	model.data = [
+		{
+			label: 'Label1',
+			value: 13
+		},
+		{
+			label: 'Label2',
+			value: 45
+		},
+		{
+			label: 'Label3test',
+			value: 35
+		},
+		{
+			label: 'Label4',
+			value: 100
+		},
+		{
+			label: 'Label5',
+			value: 60
+		},
+		{
+			label: 'Label6',
+			value: 50
+		},
+		{
+			label: 'Label4',
+			value: 100
+		},
+		{
+			label: 'Label5',
+			value: 60
+		},
+		{
+			label: 'Label6',
+			value: 50
+		}
+	]
+	return model;
+}
+
+Graph.controller = function() {
+	var model = Graph();
+
+	var ctrl = {};
+	ctrl.data = model.data;
+	ctrl.min = model.data.reduce(function(pv, cv) { return Math.min(pv, cv.value) }, 10000);
+	ctrl.max = model.data.reduce(function(pv, cv) { return Math.max(pv, cv.value) }, 0);
+	return ctrl;
+}
+
+
+Graph.view = function(ctrl) {
+	var diff = ctrl.max - ctrl.min;
+	var h=200, w=400,width=25,r=5,tl=5,tr=5,bl=0,br=0;
+	return m("svg",{height: h, width: w,preserveAspectRatio:"xMinYMax meet",viewBox:"0 -50 400 200"},[
+		m("defs",[
+			m("filter",{
+				id:"dropshadow",height:"100%",width:"140%"
+			},[
+				m("feGaussianBlur",{in:"SourceAlpha",stdDeviation:"2"}),
+				m("feOffset",{dx:"2",dy:"0",result:"offOut"}),
+				m("feBlend",{in:"SourceGraphic",in2:"offOut",mode:"normal"})
+			])
+		]),
+		m("g",{id:"main"},[
+			m("g",{id:"barGroup"},[
+				ctrl.data.map(function(d, i) {
+				/*return m("rect",{
+					x: 20 + i * 30,
+					y: h/2-((d.value-ctrl.min)+3),
+					height: (d.value-ctrl.min)+3,
+					rx:5,
+					ry:5,
+					width:25,
+					title:d.value,
+					// filter:"url(#dropshadow)"
+				})*/
+				// ;
+				height=(d.value-ctrl.min)+3;
+				return m("path",{
+						d: roundedRect(20+i*30, h/2-((d.value-ctrl.min)+3), width, (d.value-ctrl.min)+3, r, tl, tr),
+						class: color(i),
+						title: "label: "+d.label+", value: "+d.value
+						// filter:"url(#dropshadow)"
+					})
+				})
+			]),
+			[
+				m("line",{x1:"0",y1:h/2,x2:w,y2:h/2}),
+				m("g",{id:"labelGroup"},[
+					ctrl.data.map(function(d, i) {
+						return m("g",{transform:"translate("+ (40 + i * 30) +","+(h/2+6)+")"},[
+							m("text",{
+								x: 0,
+								y: 0,
+								title:d.label +" "+ (d.label).length,
+								transform:"rotate(-55, 0 5)"
+							},d.label)
+						])
+					})
+				]),
+				m("g",{id:"valueGroup",transform:"translate(10,0)"},[
+					ctrl.data.map(function(d, i) {
+						return m("g",{transform:"translate("+ (30 + i * 30) +","+ (h/2 - ((d.value-ctrl.min)+15)) +")"},[
+							m("text",{
+								x: 0,
+								y: 0,
+								title:d.label,
+								transform:"rotate(-90, 0 5)",
+								class: "start"
+							},d.value)
+						])
+					})
+				])
+			]
+		]
+	)]
+		
+  )
+}
+
+m.module(document.body, Graph);
+</script>
+</body>
+</html>
